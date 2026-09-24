@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nutrition Facts table — Canada</title>
+    <link rel="stylesheet" href="estilos.css" />
+  </head>
+  <body>
+    <h1>Nutrition Facts table — Canada</h1>
+    <p class="nota-legal">
+      Standard Format (Food and Drug Regulations, C.R.C., c. 870, B.01.401) and
+      front-of-pack "High in" symbol (B.01.350). Unilingual English only.
+    </p>
+
+    <div class="contenedor">
+      <form id="form-nutrientes">
+        <fieldset>
+          <legend>Product</legend>
+          <label>Product name <input type="text" id="producto" /></label>
+          <label
+            >Serving of stated size (text shown on the label, e.g. "1 cup (250
+            mL)")
+            <input type="text" id="porcion-texto" />
+          </label>
+          <label
+            >Serving size in g or mL (for the calculation)
+            <input type="number" id="porcion-valor" step="any" min="0" />
+          </label>
+          <label
+            >Reference Amount (RA) in g or mL, from the Table of Reference
+            Amounts for Food
+            <input type="number" id="cantidad-referencia" step="any" min="0" />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Values per 100 g or 100 mL</legend>
+          <div id="campos-nutrientes"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Symbol exemptions and product type (B.01.350)</legend>
+          <label class="campo-casilla">
+            <input type="checkbox" id="es-plato-principal" />
+            Main dish with RA &ge; 200 g (30% threshold)
+          </label>
+          <label class="campo-casilla">
+            <input type="checkbox" id="es-ninos" />
+            Food intended exclusively for children 1 to 4 years old
+          </label>
+          <label class="campo-casilla">
+            <input type="checkbox" id="envase-chico" />
+            Display surface under 100 cm² (exempt from the symbol)
+          </label>
+          <label class="campo-casilla">
+            <input type="checkbox" id="fruta-sin-adicion" />
+            Whole or cut fruit/vegetable with no added ingredient (coconut does
+            not count as fruit, B.01.350(10))
+          </label>
+          <label class="campo-casilla">
+            <input type="checkbox" id="queso-yogur-calcio" />
+            Cheese or yogurt with sufficient calcium (10% DV if RA &le; 30 g/mL,
+            15% DV if RA &gt; 30 g/mL) — exempt from saturated+trans fat and
+            sugars
+          </label>
+          <label class="campo-casilla">
+            <input type="checkbox" id="queso-exento-sodio" />
+            Also exempt from sodium (cheese only, not yogurt)
+          </label>
+          <label class="campo-casilla">
+            <input type="checkbox" id="exento-categoria" />
+            Exempt by product category (B.01.350(6)-(9)(11)-(15): sugars, table
+            salt, fats and oils, infant formula, etc.)
+          </label>
+        </fieldset>
+
+        <button type="button" id="btn-descargar">Download table (PNG)</button>
+      </form>
+
+      <div class="previsualizacion">
+        <div id="tabla-nutricional" class="etiqueta"></div>
+
+        <div id="simbolo-panel">
+          <div id="simbolo-frontal"></div>
+          <button type="button" id="btn-descargar-simbolo">
+            Download symbol (PNG)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="vendor/html2canvas.min.js"></script>
+    <script src="calculo.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

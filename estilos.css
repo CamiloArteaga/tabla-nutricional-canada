@@ -1,0 +1,154 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 1.5rem;
+  color: #111;
+}
+
+.nota-legal {
+  font-size: 0.8rem;
+  color: #444;
+  max-width: 40rem;
+}
+
+.contenedor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+form fieldset {
+  margin-bottom: 1rem;
+}
+
+form label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+}
+
+form input[type="number"],
+form input[type="text"] {
+  display: block;
+  width: 12rem;
+  margin-top: 0.1rem;
+}
+
+.campo-casilla {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.campo-casilla input {
+  width: auto;
+}
+
+/* --- Nutrition Facts table --- */
+
+.marco-nft {
+  border: 1px solid #000;
+  width: 15rem;
+  padding: 0.4rem 0.5rem;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.marco-nft h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.marco-nft .porcion {
+  margin: 0.1rem 0;
+  font-size: 0.9rem;
+}
+
+.marco-nft hr.gruesa {
+  border: none;
+  border-top: 8px solid #000;
+  margin: 0.2rem 0;
+}
+
+.marco-nft hr.fina {
+  border: none;
+  border-top: 1px solid #000;
+  margin: 0.2rem 0;
+}
+
+.fila {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding: 0.05rem 0;
+  border-bottom: 1px solid #000;
+}
+
+.fila.indentado .nombre {
+  padding-left: 1rem;
+}
+
+.fila.negrilla {
+  font-weight: bold;
+}
+
+.fila.calorias {
+  font-size: 1.3rem;
+  font-weight: 900;
+  border-bottom: none;
+}
+
+.fila.calorias .nombre {
+  font-size: 1.3rem;
+}
+
+.fila.encabezado-dv {
+  font-weight: bold;
+  font-size: 0.8rem;
+  justify-content: flex-end;
+  border-bottom: none;
+}
+
+.nota-dv {
+  font-size: 0.7rem;
+  margin: 0.3rem 0 0;
+}
+
+/* --- Front-of-pack symbol --- */
+
+#simbolo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.simbolo {
+  border: 2px solid #000;
+  width: 10rem;
+  padding: 0.6rem;
+  text-align: center;
+  background: #fff;
+}
+
+.simbolo .lupa {
+  font-size: 1.8rem;
+}
+
+.simbolo .high-in {
+  font-weight: 900;
+  font-size: 1rem;
+}
+
+.simbolo .nutrientes-simbolo {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.simbolo .firma {
+  margin-top: 0.5rem;
+  font-size: 0.65rem;
+}
+
+.sin-simbolo {
+  font-size: 0.85rem;
+  color: #444;
+}
