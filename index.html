@@ -1,97 +1,261 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nutrition Facts table — Canada</title>
+    <title>Tabla de información nutricional — Canadá</title>
     <link rel="stylesheet" href="estilos.css" />
   </head>
   <body>
-    <h1>Nutrition Facts table — Canada</h1>
+    <h1>Tabla de información nutricional — Canadá</h1>
     <p class="nota-legal">
-      Standard Format (Food and Drug Regulations, C.R.C., c. 870, B.01.401) and
-      front-of-pack "High in" symbol (B.01.350). Unilingual English only.
+      Nutrition Facts table (Food and Drug Regulations, C.R.C., c. 870, B.01.401
+      a B.01.406 y B.01.450 a B.01.469) y símbolo frontal «High in» (B.01.350 a
+      B.01.358, Schedule K.1). Los datos se cargan en español; la tabla y el
+      símbolo salen en inglés, francés o ambos idiomas. Referencias completas,
+      decisiones y límites en el
+      <a href="README.md">README</a>.
     </p>
 
     <div class="contenedor">
-      <form id="form-nutrientes">
+      <form id="form-nutrientes" autocomplete="off">
         <fieldset>
-          <legend>Product</legend>
-          <label>Product name <input type="text" id="producto" /></label>
+          <legend>Producto</legend>
+          <label>Nombre del producto <input type="text" id="producto" /></label>
           <label
-            >Serving of stated size (text shown on the label, e.g. "1 cup (250
-            mL)")
-            <input type="text" id="porcion-texto" />
+            >Destinatario (define la columna de la Table of Daily Values)
+            <select id="audiencia">
+              <option value="general">
+                General: adultos y niños de 4 años o más (o también 1 a &lt; 4
+                años)
+              </option>
+              <option value="ninos">Solo niños de 1 a &lt; 4 años</option>
+              <option value="lactantes">
+                Solo lactantes de 6 a &lt; 12 meses
+              </option>
+            </select>
           </label>
-          <label
-            >Serving size in g or mL (for the calculation)
-            <input type="number" id="porcion-valor" step="any" min="0" />
-          </label>
-          <label
-            >Reference Amount (RA) in g or mL, from the Table of Reference
-            Amounts for Food
-            <input type="number" id="cantidad-referencia" step="any" min="0" />
+          <div class="fila-campos">
+            <label
+              >Porción en g o mL (base del cálculo)
+              <input type="number" id="porcion-valor" step="any" min="0" />
+            </label>
+            <label
+              >Unidad
+              <select id="porcion-unidad">
+                <option value="g">g</option>
+                <option value="mL">mL</option>
+              </select>
+            </label>
+          </div>
+          <div class="fila-campos">
+            <label
+              >Medida casera, inglés (p. ej. «1 cup»)
+              <input type="text" id="hm-en" />
+            </label>
+            <label
+              >Medida casera, francés (p. ej. «1 tasse»)
+              <input type="text" id="hm-fr" />
+            </label>
+          </div>
+          <div class="fila-campos">
+            <label
+              >Porciones por envase (opcional)
+              <input type="number" id="por-envase" step="any" min="0" />
+            </label>
+            <label
+              >Cantidad de referencia (RA), g o mL
+              <input
+                type="number"
+                id="cantidad-referencia"
+                step="any"
+                min="0"
+              />
+            </label>
+          </div>
+          <label class="campo-casilla">
+            <input type="checkbox" id="porcion-individual" />
+            Producto de porción individual que no es una comida preempacada
+            (B.01.401(6.1))
           </label>
         </fieldset>
 
         <fieldset>
-          <legend>Values per 100 g or 100 mL</legend>
-          <div id="campos-nutrientes"></div>
+          <legend>Composición por 100 g o 100 mL (B.01.401)</legend>
+          <div id="campos-nutrientes" class="rejilla"></div>
+          <details>
+            <summary>
+              Información adicional (B.01.402): grasas, fibras, vitaminas y
+              minerales
+            </summary>
+            <p class="ayuda">
+              Marque «declarar» para incluir la fila. «Añadido» indica que la
+              vitamina, el mineral o el polialcohol fue añadido o viene de un
+              ingrediente: debe declararse (B.01.402(6) y (7)).
+            </p>
+            <div id="campos-adicionales" class="rejilla-adicional"></div>
+          </details>
         </fieldset>
 
         <fieldset>
-          <legend>Symbol exemptions and product type (B.01.350)</legend>
+          <legend>Declaraciones y opciones de la tabla</legend>
+          <p class="ayuda">
+            «Free of»: solo tiene efecto si los datos cumplen la condición de la
+            Table of Permitted Nutrient Content Statements and Claims; si no, se
+            avisa y se redondea sin ella.
+          </p>
+          <div id="campos-claims" class="rejilla-casillas"></div>
           <label class="campo-casilla">
-            <input type="checkbox" id="es-plato-principal" />
-            Main dish with RA &ge; 200 g (30% threshold)
+            <input type="checkbox" id="mostrar-kj" /> Mostrar kilojulios
+            (B.01.402, ítem 2)
           </label>
           <label class="campo-casilla">
-            <input type="checkbox" id="es-ninos" />
-            Food intended exclusively for children 1 to 4 years old
+            <input type="checkbox" id="mostrar-pct-chol" /> Mostrar el %VD del
+            colesterol (opcional, B.01.401 ítem 7)
           </label>
-          <label class="campo-casilla">
-            <input type="checkbox" id="envase-chico" />
-            Display surface under 100 cm² (exempt from the symbol)
+          <label class="campo-casilla" id="fila-omitir-lactantes" hidden>
+            <input type="checkbox" id="omitir-sat-trans-chol" /> Omitir
+            saturadas, trans y colesterol (B.01.403(3))
           </label>
-          <label class="campo-casilla">
-            <input type="checkbox" id="fruta-sin-adicion" />
-            Whole or cut fruit/vegetable with no added ingredient (coconut does
-            not count as fruit, B.01.350(10))
-          </label>
-          <label class="campo-casilla">
-            <input type="checkbox" id="queso-yogur-calcio" />
-            Cheese or yogurt with sufficient calcium (10% DV if RA &le; 30 g/mL,
-            15% DV if RA &gt; 30 g/mL) — exempt from saturated+trans fat and
-            sugars
-          </label>
-          <label class="campo-casilla">
-            <input type="checkbox" id="queso-exento-sodio" />
-            Also exempt from sodium (cheese only, not yogurt)
-          </label>
-          <label class="campo-casilla">
-            <input type="checkbox" id="exento-categoria" />
-            Exempt by product category (B.01.350(6)-(9)(11)-(15): sugars, table
-            salt, fats and oils, infant formula, etc.)
-          </label>
+          <p class="ayuda">
+            Nutrientes objeto de una declaración nutricional (se conservan en la
+            tabla simplificada):
+          </p>
+          <div id="campos-declaraciones" class="rejilla-casillas"></div>
         </fieldset>
 
-        <button type="button" id="btn-descargar">Download table (PNG)</button>
+        <fieldset>
+          <legend>Formato de la tabla</legend>
+          <label
+            >Contenido
+            <select id="reducida">
+              <option value="estandar">Tabla completa (B.01.401(1))</option>
+              <option value="simplificada">
+                Simplificada (B.01.401(6) o B.01.403(5))
+              </option>
+              <option value="individual">
+                Simplificada de porción individual (B.01.401(6.1))
+              </option>
+            </select>
+          </label>
+          <label class="campo-casilla" id="fila-otros">
+            <input type="checkbox" id="otros-nutrientes" /> Usar «other
+            nutrients» (no cabe en el 15 % de la superficie, B.01.455(3))
+          </label>
+          <label
+            >Columnas
+            <select id="modo">
+              <option value="unica">Una columna (formato estándar)</option>
+              <option value="preparado">
+                Tal como se vende y preparado (B.01.406(5), B.01.456)
+              </option>
+              <option value="alimentos">
+                Varios alimentos en un envase (B.01.406(2) a (4), B.01.457)
+              </option>
+              <option value="cantidades">
+                Otras cantidades, solo calorías (B.01.406(7), B.01.458)
+              </option>
+              <option value="cantidades-completas">
+                Otras cantidades, tabla completa (B.01.406(7)(c), B.01.459)
+              </option>
+            </select>
+          </label>
+          <label
+            >Idioma de salida
+            <select id="idioma">
+              <option value="bilingue">Bilingüe: una tabla «EN / FR»</option>
+              <option value="ambas">Dos tablas: inglés y francés</option>
+              <option value="en">Solo inglés</option>
+              <option value="fr">Solo francés</option>
+            </select>
+          </label>
+          <label
+            >Presentación
+            <select id="presentacion">
+              <option value="tabla">Tabla vertical</option>
+              <option value="lineal">Lineal (Fig. 16.1 / 17.1)</option>
+            </select>
+          </label>
+          <div id="extras"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Símbolo «High in» (B.01.350)</legend>
+          <label
+            >Categoría del producto
+            <select id="categoria"></select>
+          </label>
+          <div class="fila-campos">
+            <label
+              >Superficie expuesta disponible (cm²)
+              <input
+                type="number"
+                id="superficie-disponible"
+                step="any"
+                min="0"
+              />
+            </label>
+            <label
+              >Superficie principal de exhibición (cm²)
+              <input
+                type="number"
+                id="superficie-principal"
+                step="any"
+                min="0"
+              />
+            </label>
+          </div>
+          <label class="campo-casilla">
+            <input type="checkbox" id="requiere-nft" /> El producto debe llevar
+            la tabla (vitamina o mineral añadido, declaración nutricional,
+            «nutrition facts» en la etiqueta u otro supuesto de B.01.401(3))
+          </label>
+          <label class="campo-casilla">
+            <input type="checkbox" id="plato-principal" /> Plato principal (main
+            dish): umbral de 30 % si la RA es de 200 g o más (170 g si es solo
+            para niños)
+          </label>
+          <label class="campo-casilla">
+            <input type="checkbox" id="reconstituir" /> Se reconstituye o
+            prepara y la RA se refiere solo al alimento preparado (B.01.350(3) y
+            (4))
+          </label>
+          <label
+            >Queso o yogur (incluido bebible) hecho de lácteos, kéfir o suero (B.01.350(9) y (11))
+            <select id="tipo-lacteo">
+              <option value="ninguno">No</option>
+              <option value="queso">Queso</option>
+              <option value="yogur">
+                Yogur (incluido bebible)
+              </option>
+            </select>
+          </label>
+          <p class="ayuda">
+            Ingredientes que aportan grasa saturada, sodio o azúcares
+            (B.01.350(6) a (8)):
+          </p>
+          <div id="campos-ingredientes" class="rejilla-casillas"></div>
+          <p class="ayuda">Se añadió al producto:</p>
+          <div id="campos-anadidos" class="rejilla-casillas"></div>
+        </fieldset>
+
+        <div class="botones">
+          <button type="button" id="btn-ejemplo">Cargar ejemplo</button>
+          <button type="button" id="btn-limpiar">Limpiar formulario</button>
+        </div>
       </form>
 
       <div class="previsualizacion">
-        <div id="tabla-nutricional" class="etiqueta"></div>
-
-        <div id="simbolo-panel">
-          <div id="simbolo-frontal"></div>
-          <button type="button" id="btn-descargar-simbolo">
-            Download symbol (PNG)
-          </button>
-        </div>
+        <div id="avisos"></div>
+        <div id="salida-tablas"></div>
+        <div id="salida-simbolo"></div>
       </div>
     </div>
 
     <script src="vendor/html2canvas.min.js"></script>
+    <script src="datos.js"></script>
     <script src="calculo.js"></script>
+    <script src="formatos.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

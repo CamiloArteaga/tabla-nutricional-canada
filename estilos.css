@@ -7,13 +7,19 @@ body {
 .nota-legal {
   font-size: 0.8rem;
   color: #444;
-  max-width: 40rem;
+  max-width: 44rem;
 }
 
 .contenedor {
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;
+  align-items: flex-start;
+}
+
+form {
+  flex: 1 1 26rem;
+  max-width: 34rem;
 }
 
 form fieldset {
@@ -27,128 +33,330 @@ form label {
 }
 
 form input[type="number"],
-form input[type="text"] {
+form input[type="text"],
+form select {
   display: block;
-  width: 12rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   margin-top: 0.1rem;
+}
+
+.fila-campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.fila-campos > label {
+  flex: 1 1 9rem;
+}
+
+.rejilla,
+.rejilla-casillas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.2rem 0.8rem;
+}
+
+.rejilla-casillas {
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+
+.fila-adicional {
+  display: grid;
+  grid-template-columns: 1fr 5rem auto auto;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+}
+
+.fila-adicional input[type="number"] {
+  margin: 0;
+}
+
+.fila-adicional label {
+  margin: 0;
+  white-space: nowrap;
 }
 
 .campo-casilla {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.4rem;
 }
 
 .campo-casilla input {
   width: auto;
+  margin-top: 0.15rem;
+}
+
+.ayuda {
+  font-size: 0.78rem;
+  color: #444;
+  margin: 0.3rem 0;
+}
+
+.bloque-extra {
+  border-top: 1px solid #bbb;
+  margin-top: 0.6rem;
+  padding-top: 0.4rem;
+}
+
+.bloque-extra h3 {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+}
+
+.botones {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* --- Salida --- */
+
+.previsualizacion {
+  flex: 1 1 24rem;
+  min-width: 18rem;
+}
+
+.avisos {
+  background: #fff6d6;
+  border: 1px solid #d9b400;
+  padding: 0.5rem 1.6rem;
+  font-size: 0.82rem;
+  margin: 0 0 1rem;
+}
+
+.bloque-salida {
+  margin-bottom: 1.2rem;
+}
+
+.bloque-cab {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.bloque-cab h3 {
+  margin: 0.2rem 0;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.captura {
+  display: inline-block;
+  background: #fff;
+  padding: 0.3rem;
 }
 
 /* --- Nutrition Facts table --- */
 
-.marco-nft {
+.nft {
   border: 1px solid #000;
-  width: 15rem;
-  padding: 0.4rem 0.5rem;
+  width: 20rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.35rem 0.5rem;
   font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.82rem;
+  background: #fff;
+  color: #000;
 }
 
-.marco-nft h2 {
+.nft-lineal {
+  width: 34rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.nft-lineal p {
   margin: 0;
-  font-size: 1.6rem;
+}
+
+.nft-titulo {
+  font-size: 1.5rem;
   font-weight: 900;
+  line-height: 1.1;
+  border-bottom: 1px solid #000;
+  padding-bottom: 0.15rem;
 }
 
-.marco-nft .porcion {
-  margin: 0.1rem 0;
+.nft-bilingue {
+  width: 29rem;
+}
+
+.nft-bilingue tr.cal td {
+  font-size: 1.05rem;
+}
+
+.nft-bilingue .nft-titulo {
+  font-size: 1.25rem;
+}
+
+.nft-porcion {
   font-size: 0.9rem;
+  padding: 0.15rem 0;
+  border-bottom: 8px solid #000;
 }
 
-.marco-nft hr.gruesa {
-  border: none;
-  border-top: 8px solid #000;
-  margin: 0.2rem 0;
-}
-
-.marco-nft hr.fina {
-  border: none;
-  border-top: 1px solid #000;
-  margin: 0.2rem 0;
-}
-
-.fila {
-  display: flex;
-  justify-content: space-between;
+.nft-envase {
   font-size: 0.85rem;
-  padding: 0.05rem 0;
+  padding: 0.1rem 0;
+}
+
+.nft table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.nft td {
+  padding: 0.08rem 0;
+  vertical-align: baseline;
   border-bottom: 1px solid #000;
 }
 
-.fila.indentado .nombre {
+.nft td.n {
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 0.3rem;
+}
+
+.nft td.pct {
+  font-weight: bold;
+}
+
+.nft tr.cab td {
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.78rem;
+  border-bottom: 1px solid #000;
+}
+
+.nft tr.cab small {
+  font-weight: normal;
+}
+
+.nft tr.cal td {
+  font-size: 1.25rem;
+  border-bottom: 5px solid #000;
+}
+
+.nft tr.sub td {
+  border-bottom: 1px solid #000;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.nft tr.n1 td.et {
   padding-left: 1rem;
 }
 
-.fila.negrilla {
-  font-weight: bold;
+.nft tr.n2 td.et {
+  padding-left: 2rem;
 }
 
-.fila.calorias {
-  font-size: 1.3rem;
-  font-weight: 900;
-  border-bottom: none;
+.nft .cant {
+  font-weight: normal;
 }
 
-.fila.calorias .nombre {
-  font-size: 1.3rem;
-}
-
-.fila.encabezado-dv {
-  font-weight: bold;
+.nft-ns {
   font-size: 0.8rem;
-  justify-content: flex-end;
-  border-bottom: none;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid #000;
 }
 
-.nota-dv {
-  font-size: 0.7rem;
-  margin: 0.3rem 0 0;
+.nft-nota {
+  font-size: 0.72rem;
+  padding-top: 0.15rem;
 }
 
-/* --- Front-of-pack symbol --- */
-
-#simbolo-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.nft-leyenda {
+  font-size: 0.72rem;
+  padding-top: 0.2rem;
 }
+
+/* --- Símbolo «High in» (blanco y negro, B.01.351(1)) --- */
 
 .simbolo {
+  display: inline-flex;
+  align-items: stretch;
   border: 2px solid #000;
-  width: 10rem;
-  padding: 0.6rem;
-  text-align: center;
   background: #fff;
+  color: #000;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 0.3rem 0.5rem 0.3rem 0.3rem;
+  gap: 0.4rem;
 }
 
 .simbolo .lupa {
-  font-size: 1.8rem;
+  width: 2.2rem;
+  flex: none;
+  align-self: flex-start;
 }
 
-.simbolo .high-in {
+.simbolo .cuerpo {
+  display: flex;
+  flex-direction: column;
+  min-width: 7rem;
+}
+
+.simbolo .cab {
   font-weight: 900;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
-.simbolo .nutrientes-simbolo {
+.simbolo .barra {
+  min-height: 1.15rem;
+  margin-top: 0.15rem;
+  padding: 0 0.3rem;
   font-weight: bold;
-  font-size: 0.9rem;
-}
-
-.simbolo .firma {
-  margin-top: 0.5rem;
-  font-size: 0.65rem;
-}
-
-.sin-simbolo {
   font-size: 0.85rem;
-  color: #444;
+  border: 1px solid #000;
+}
+
+.simbolo .barra.on {
+  background: #000;
+  color: #fff;
+}
+
+.simbolo .pie {
+  font-size: 0.6rem;
+  text-align: right;
+  margin-top: 0.15rem;
+}
+
+.estado {
+  font-weight: bold;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #000;
+  display: inline-block;
+}
+
+.estado-requerido {
+  background: #ffe0e0;
+}
+
+.estado-prohibido {
+  background: #e0e0ff;
+}
+
+.estado-exento,
+.estado-no-aplica {
+  background: #e0ffe0;
+}
+
+.tabla-simbolo {
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin: 0.5rem 0;
+}
+
+.tabla-simbolo th,
+.tabla-simbolo td {
+  border: 1px solid #999;
+  padding: 0.2rem 0.5rem;
+  text-align: left;
 }

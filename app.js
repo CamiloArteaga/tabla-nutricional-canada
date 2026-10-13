@@ -1,209 +1,480 @@
-// DOM: formulario, render de la NFT y del símbolo frontal, persistencia.
+// DOM: formulario en español, tabla y símbolo en EN/FR, persistencia.
+// Los cálculos viven en calculo.js; el HTML de la tabla y del símbolo, en formatos.js.
 
-const CAMPOS_100 = C.CORE_INFO.filter((n) => n.k !== "satTransDV");
-const CLAVE_STORAGE = "tabla-nutricional-canada";
+const CLAVE_STORAGE = "tabla-nutricional-canada-v2";
+const el = (id) => document.getElementById(id);
 
-function construirCamposNutrientes() {
-  const contenedor = document.getElementById("campos-nutrientes");
-  for (const item of CAMPOS_100) {
-    const label = document.createElement("label");
-    label.textContent = `${item.nombre} (${item.unidad || "g"})`;
-    const input = document.createElement("input");
-    input.type = "number";
-    input.step = "any";
-    input.min = "0";
-    input.id = `n-${item.k}`;
-    input.value = "0";
-    label.appendChild(input);
-    contenedor.appendChild(label);
+const NUCLEO = D.CORE_INFO;
+const ADIC = D.ADICIONALES.filter((a) => a.k !== "kJ"); // el kJ se calcula
+const OMISIBLES_UI = [
+  "sat",
+  "trans",
+  "chol",
+  "na",
+  "fibre",
+  "sugars",
+  "pot",
+  "ca",
+  "fe",
+];
+const INGREDIENTES = [
+  [
+    "fruta",
+    "Fruta u hortaliza entera o cortada (fresca, congelada, enlatada, seca)",
+  ],
+  ["coco", "…que es coco (no cuenta como fruta, B.01.350(10))"],
+  ["leche", "Leche, líquida o en polvo"],
+  ["huevo", "Huevo entero"],
+  ["frutosSecos", "Frutos secos, semillas o sus mantequillas"],
+  ["aceites", "Aceites vegetales o marinos"],
+  ["pescado", "Productos acuáticos"],
+  ["lacteos", "Otros lácteos (queso, yogur, crema…)"],
+  ["cereales", "Cereales o granos"],
+  ["legumbres", "Legumbres"],
+  ["otros", "Cualquier otro ingrediente que aporte el nutriente"],
+];
+const ANADIDOS = [
+  ["sat", "Grasa saturada"],
+  ["na", "Sodio"],
+  ["azucares", "Azúcares"],
+];
+
+function casilla(id, texto) {
+  const l = document.createElement("label");
+  l.className = "campo-casilla";
+  l.innerHTML = `<input type="checkbox" id="${id}" /> ${texto}`;
+  return l;
+}
+
+function campoNumero(id, texto) {
+  const l = document.createElement("label");
+  l.append(texto);
+  const i = document.createElement("input");
+  i.type = "number";
+  i.step = "any";
+  i.min = "0";
+  i.id = id;
+  l.appendChild(i);
+  return l;
+}
+
+function construirComposicion(cont, prefijo, conAdicionales) {
+  for (const it of NUCLEO)
+    cont.appendChild(
+      campoNumero(`${prefijo}n-${it.k}`, `${D.NOMBRE_ES[it.k]} (${it.unidad})`),
+    );
+  if (conAdicionales === "valores") {
+    const det = document.createElement("details");
+    det.innerHTML = "<summary>Información adicional</summary>";
+    const g = document.createElement("div");
+    g.className = "rejilla";
+    for (const a of ADIC)
+      g.appendChild(
+        campoNumero(`${prefijo}a-${a.k}`, `${D.NOMBRE_ES[a.k]} (${a.unidad})`),
+      );
+    det.appendChild(g);
+    cont.appendChild(det);
   }
 }
 
-function leerFormulario() {
-  const valores100 = {};
-  for (const item of CAMPOS_100) {
-    valores100[item.k] =
-      parseFloat(document.getElementById(`n-${item.k}`).value) || 0;
+function construirFormulario() {
+  construirComposicion(el("campos-nutrientes"), "", false);
+  const ca = el("campos-adicionales");
+  for (const a of ADIC) {
+    const fila = document.createElement("div");
+    fila.className = "fila-adicional";
+    fila.innerHTML = `<span>${D.NOMBRE_ES[a.k]} (${a.unidad})</span>
+      <input type="number" step="any" min="0" id="a-${a.k}" />
+      <label><input type="checkbox" id="ad-${a.k}" /> declarar</label>
+      <label><input type="checkbox" id="an-${a.k}" /> añadido</label>`;
+    ca.appendChild(fila);
+  }
+  const cc = el("campos-claims");
+  for (const k of Object.keys(C.CLAIMS))
+    cc.appendChild(casilla(`claim-${k}`, C.CLAIMS[k].es));
+  const cd = el("campos-declaraciones");
+  for (const k of OMISIBLES_UI)
+    cd.appendChild(casilla(`decl-${k}`, D.NOMBRE_ES[k]));
+  const ci = el("campos-ingredientes");
+  for (const [k, t] of INGREDIENTES) ci.appendChild(casilla(`ing-${k}`, t));
+  const cn = el("campos-anadidos");
+  for (const [k, t] of ANADIDOS) cn.appendChild(casilla(`anad-${k}`, t));
+
+  const sel = el("categoria");
+  const grupos = {
+    ninguna: null,
+    prohibido: "Prohibido llevar el símbolo (15)",
+    exento: "Exento (5)",
+    cond: "Exento si no debe llevar la tabla (13)",
+  };
+  let og = null;
+  for (const c of D.CATEGORIAS_SIMBOLO) {
+    if (grupos[c.tipo] && (!og || og.label !== grupos[c.tipo])) {
+      og = document.createElement("optgroup");
+      og.label = grupos[c.tipo];
+      sel.appendChild(og);
+    }
+    const o = document.createElement("option");
+    o.value = c.id;
+    o.textContent = c.ref ? `${c.ref} ${c.es}` : c.es;
+    (c.tipo === "ninguna" ? sel : og).appendChild(o);
+  }
+
+  const ex = el("extras");
+  for (let i = 1; i <= 3; i++) {
+    const b = document.createElement("div");
+    b.className = "bloque-extra";
+    b.id = `bloque-x${i}`;
+    b.hidden = true;
+    b.innerHTML = `<h3 data-titulo></h3>
+      <div class="fila-campos" data-rotulos>
+        <label>Rótulo en inglés <input type="text" id="x${i}-rot-en" /></label>
+        <label>Rótulo en francés <input type="text" id="x${i}-rot-fr" /></label>
+      </div>
+      <div class="fila-campos">
+        <label>Cantidad en g o mL <input type="number" step="any" min="0" id="x${i}-valor" /></label>
+        <label>Medida casera, inglés <input type="text" id="x${i}-hm-en" /></label>
+        <label>Medida casera, francés <input type="text" id="x${i}-hm-fr" /></label>
+      </div>
+      <div data-comp><p class="ayuda">Composición por 100 g o 100 mL de este alimento:</p><div class="rejilla" id="x${i}-comp"></div></div>`;
+    ex.appendChild(b);
+    construirComposicion(el(`x${i}-comp`), `x${i}-`, "valores");
+  }
+}
+
+function actualizarModo() {
+  const modo = el("modo").value;
+  const conComp = modo === "preparado" || modo === "alimentos";
+  const cuantos = {
+    unica: 0,
+    preparado: 1,
+    alimentos: 2,
+    cantidades: 3,
+    "cantidades-completas": 3,
+  }[modo];
+  const titulo = {
+    preparado: () => "Alimento preparado",
+    alimentos: (i) => `Alimento ${i + 1}`,
+    cantidades: (i) => `Otra cantidad ${i}`,
+    "cantidades-completas": (i) => `Otra cantidad ${i}`,
+  }[modo];
+  for (let i = 1; i <= 3; i++) {
+    const b = el(`bloque-x${i}`);
+    b.hidden = i > cuantos;
+    if (i <= cuantos) {
+      b.querySelector("[data-titulo]").textContent = titulo(
+        modo === "alimentos" ? i : i,
+      );
+      b.querySelector("[data-rotulos]").hidden = modo !== "alimentos";
+      b.querySelector("[data-comp]").hidden = !conComp;
+    }
+  }
+  el("fila-omitir-lactantes").hidden = el("audiencia").value !== "lactantes";
+}
+
+// --- Lectura del formulario ---
+
+const numero = (id) => {
+  const v = parseFloat(el(id).value);
+  return Number.isFinite(v) ? v : 0;
+};
+const marcado = (id) => el(id).checked;
+
+function leerComposicion(prefijo, conAdicionales) {
+  const c = {};
+  for (const it of NUCLEO) c[it.k] = numero(`${prefijo}n-${it.k}`);
+  if (conAdicionales)
+    for (const a of ADIC) c[a.k] = numero(`${prefijo}a-${a.k}`);
+  return c;
+}
+
+function leerEntrada() {
+  const comp = leerComposicion("", false);
+  const adicionales = [];
+  const anadidos = [];
+  for (const a of ADIC) {
+    comp[a.k] = numero(`a-${a.k}`);
+    if (marcado(`ad-${a.k}`)) adicionales.push(a.k);
+    if (marcado(`an-${a.k}`)) anadidos.push(a.k);
+  }
+  const claims = {};
+  for (const k of Object.keys(C.CLAIMS)) claims[k] = marcado(`claim-${k}`);
+  const declaraciones = OMISIBLES_UI.filter((k) => marcado(`decl-${k}`));
+  const modo = el("modo").value;
+  const extras = [];
+  const cuantos = {
+    unica: 0,
+    preparado: 1,
+    alimentos: 2,
+    cantidades: 3,
+    "cantidades-completas": 3,
+  }[modo];
+  for (let i = 1; i <= cuantos; i++) {
+    const x = {
+      valor: numero(`x${i}-valor`),
+      hmEn: el(`x${i}-hm-en`).value,
+      hmFr: el(`x${i}-hm-fr`).value,
+      rotuloEn: el(`x${i}-rot-en`).value,
+      rotuloFr: el(`x${i}-rot-fr`).value,
+    };
+    if (modo === "preparado" || modo === "alimentos")
+      x.composicion = leerComposicion(`x${i}-`, true);
+    extras.push(x);
   }
   return {
-    producto: document.getElementById("producto").value,
-    porcionTexto: document.getElementById("porcion-texto").value,
-    porcionValor:
-      parseFloat(document.getElementById("porcion-valor").value) || 0,
-    cantidadReferencia:
-      parseFloat(document.getElementById("cantidad-referencia").value) || 0,
-    valores100,
-    opciones: {
-      platoPrincipal: document.getElementById("es-plato-principal").checked,
-      ninos1a4: document.getElementById("es-ninos").checked,
-      envaseChico: document.getElementById("envase-chico").checked,
-      frutaHortalizaSinAdicion:
-        document.getElementById("fruta-sin-adicion").checked,
-      quesoOYogurConCalcioSuficiente:
-        document.getElementById("queso-yogur-calcio").checked,
-      quesoEsExentoDeSodio:
-        document.getElementById("queso-exento-sodio").checked,
-      exentoPorCategoria: document.getElementById("exento-categoria").checked,
+    audiencia: el("audiencia").value,
+    porcion: {
+      valor: numero("porcion-valor"),
+      unidad: el("porcion-unidad").value,
+      hmEn: el("hm-en").value,
+      hmFr: el("hm-fr").value,
+      individual: marcado("porcion-individual"),
+      porEnvase: numero("por-envase"),
     },
+    composicion: comp,
+    adicionales,
+    anadidos,
+    claims,
+    declaraciones,
+    ra: numero("cantidad-referencia"),
+    mostrarKJ: marcado("mostrar-kj"),
+    mostrarPctChol: marcado("mostrar-pct-chol"),
+    omitirSatTransChol: marcado("omitir-sat-trans-chol"),
+    otrosNutrientes: marcado("otros-nutrientes"),
+    reducida: el("reducida").value,
+    modo,
+    extras,
   };
 }
 
-function fila(nombre, valorTexto, pctTexto, opts = {}) {
-  const negrilla = opts.negrilla ? " negrilla" : "";
-  const indentado = opts.indentado ? " indentado" : "";
-  const pct = pctTexto != null ? `<span class="pct">${pctTexto}</span>` : "";
-  return `<div class="fila${negrilla}${indentado}"><span class="nombre">${nombre}${valorTexto ? " " + valorTexto : ""}</span>${pct}</div>`;
+function leerEntradaSimbolo(e) {
+  const ingredientes = {};
+  for (const [k] of INGREDIENTES) ingredientes[k] = marcado(`ing-${k}`);
+  const anadidos = {};
+  for (const [k] of ANADIDOS) anadidos[k] = marcado(`anad-${k}`);
+  return {
+    composicion: e.composicion,
+    porcion: e.porcion.valor,
+    ra: e.ra,
+    audiencia: e.audiencia,
+    platoPrincipal: marcado("plato-principal"),
+    reconstituir: marcado("reconstituir"),
+    categoria: el("categoria").value,
+    superficieDisponible: numero("superficie-disponible"),
+    superficiePrincipal: numero("superficie-principal"),
+    requiereNFT:
+      marcado("requiere-nft") ||
+      e.anadidos.length > 0 ||
+      e.declaraciones.length > 0,
+    tipoLacteo: el("tipo-lacteo").value,
+    ingredientes,
+    anadidos,
+  };
 }
 
-function pintarNFT(datos, res) {
-  const d = res.declarado;
-  const p = res.porcentajes;
-  const porciones = datos.porcionTexto
-    ? `Serving Size ${datos.porcionTexto}`
+// --- Salida ---
+
+function bloque(id, titulo, html) {
+  return `<section class="bloque-salida"><div class="bloque-cab"><h3>${titulo}</h3><button type="button" class="btn-png" data-captura="${id}">Descargar PNG</button></div><div class="captura" id="${id}">${html}</div></section>`;
+}
+
+function pintarAvisos(lista) {
+  el("avisos").innerHTML = lista.length
+    ? `<ul class="avisos">${lista.map((a) => `<li>${a}</li>`).join("")}</ul>`
     : "";
-
-  let html = `<div class="marco-nft">`;
-  html += `<h2>Nutrition Facts</h2>`;
-  if (porciones) html += `<p class="porcion">${porciones}</p>`;
-  html += `<hr class="gruesa" />`;
-  html += `<div class="fila calorias"><span class="nombre">Calories</span><span class="valor-calorias">${d.cal}</span></div>`;
-  html += `<hr class="gruesa" />`;
-  html += `<div class="fila encabezado-dv"><span></span><span>% Daily Value*</span></div>`;
-  html += fila("Fat", `${d.fat} g`, `${p.fat}%`, { negrilla: true });
-  html += fila("Saturated Fat", `${d.sat} g`, null, { indentado: true });
-  html += fila("+ Trans Fat", `${d.trans} g`, `${p.satTransDV}%`, {
-    indentado: true,
-    negrilla: true,
-  });
-  html += fila("Cholesterol", `${d.chol} mg`, `${p.chol}%`);
-  html += fila("Sodium", `${d.na} mg`, `${p.na}%`, { negrilla: true });
-  html += fila("Carbohydrate", `${d.cho} g`);
-  html += fila("Fibre", `${d.fibre} g`, `${p.fibre}%`, { indentado: true });
-  html += fila("Sugars", `${d.sugars} g`, `${p.sugars}%`, {
-    indentado: true,
-    negrilla: true,
-  });
-  html += fila("Protein", `${d.prot} g`);
-  html += `<hr class="fina" />`;
-  html += fila("Potassium", `${d.pot} mg`, `${p.pot}%`);
-  html += fila("Calcium", `${d.ca} mg`, `${p.ca}%`);
-  html += fila("Iron", `${d.fe} mg`, `${p.fe}%`);
-  html += `<hr class="fina" />`;
-  html += `<p class="nota-dv">*5% or less is a little, 15% or more is a lot</p>`;
-  html += `</div>`;
-
-  document.getElementById("tabla-nutricional").innerHTML = html;
 }
 
-// Cholesterol %DV es opcional (B.01.401): este primer commit siempre lo
-// calcula y lo muestra; ocultarlo condicionalmente queda para si se pide.
+const NOMBRE_ESTADO = {
+  requerido: "El símbolo es obligatorio",
+  "no-aplica": "No se requiere el símbolo",
+  exento: "Producto exento del símbolo",
+  prohibido: "La etiqueta NO puede llevar el símbolo",
+};
 
-function pintarSimbolo(disparados) {
-  const cont = document.getElementById("simbolo-frontal");
-  if (disparados.size === 0) {
-    cont.innerHTML = `<p class="sin-simbolo">No symbol triggered.</p>`;
-    return;
+function pintarSimbolo(sim, e, idioma) {
+  let h = `<h2>Símbolo «High in»</h2><p class="estado estado-${sim.estado}">${NOMBRE_ESTADO[sim.estado]}</p>`;
+  if (sim.motivos.length)
+    h += `<ul>${sim.motivos.map((m) => `<li>${m}</li>`).join("")}</ul>`;
+  if (sim.avisos.length)
+    h += `<ul class="avisos">${sim.avisos.map((m) => `<li>${m}</li>`).join("")}</ul>`;
+  if (sim.estado !== "prohibido") {
+    h += `<table class="tabla-simbolo"><tr><th>Nutriente</th><th>% VD (la mayor de porción y RA)</th><th>Umbral</th><th>Resultado</th></tr>`;
+    for (const k of C.NUTRIENTES_SIMBOLO) {
+      const n = sim.nutrientes[k];
+      const r = n.alcanza
+        ? n.exento
+          ? `Alcanza, pero exento: ${n.exento}`
+          : "Alcanza el umbral"
+        : "No alcanza";
+      h += `<tr><td>${C.ETIQUETA_SIMBOLO[k]}</td><td>${n.pct.toFixed(1)} %</td><td>≥ ${n.umbral} %</td><td>${r}</td></tr>`;
+    }
+    h += `</table>`;
   }
-  const NOMBRES = { satTrans: "Saturated Fat", sugars: "Sugars", na: "Sodium" };
-  const lista = [...disparados].map((k) => NOMBRES[k]).join(", ");
-  cont.innerHTML = `
-    <div class="simbolo">
-      <div class="lupa">🔍</div>
-      <div class="texto-simbolo">
-        <div class="high-in">High in</div>
-        <div class="nutrientes-simbolo">${lista}</div>
-      </div>
-      <div class="firma">Health Canada</div>
-    </div>
-  `;
+  if (sim.estado === "requerido") {
+    const bilingue = idioma === "bilingue";
+    h += `<p>Versión ${sim.version} del Schedule K.1 (B.01.352), formato horizontal.</p>`;
+    const dim = C.dimensionSimbolo(
+      bilingue,
+      numero("superficie-principal"),
+      sim.version,
+    );
+    if (dim)
+      h += `<p>Tamaño mínimo según el Directory of Nutrition Symbol Specifications: ${dim.ancho} × ${dim.alto} cm, margen de resguardo de ${dim.margen} mm.</p>`;
+    else
+      h += `<p class="ayuda">Indique la superficie principal de exhibición para ver el tamaño y la versión exacta.</p>`;
+    const piezas = F.renderizarSimbolo(sim, idioma);
+    h += piezas
+      .map((p) => bloque(`simbolo-${p.id}`, `Símbolo (${p.id})`, p.html))
+      .join("");
+    if (idioma === "en" || idioma === "fr")
+      h += `<p class="ayuda">Un solo idioma solo es válido si B.01.012(3) o (7) lo permiten (B.01.351(4)); si no, use las dos versiones o la bilingüe.</p>`;
+  }
+  el("salida-simbolo").innerHTML = h;
 }
 
 function recalcular() {
-  const datos = leerFormulario();
-  const res = C.calcular(datos.valores100, datos.porcionValor);
-  pintarNFT(datos, res);
-
-  const disparados = C.calcularSimbolo(
-    datos.valores100,
-    datos.porcionValor,
-    datos.cantidadReferencia,
-    datos.opciones,
-  );
-  pintarSimbolo(disparados);
-
-  guardar(datos);
+  actualizarModo();
+  const e = leerEntrada();
+  const avisos = [];
+  if (!(e.porcion.valor > 0)) {
+    el("salida-tablas").innerHTML =
+      `<p class="ayuda">Ingrese la porción en g o mL para generar la tabla.</p>`;
+    el("salida-simbolo").innerHTML = "";
+    pintarAvisos([]);
+    guardar();
+    return;
+  }
+  try {
+    const R = C.calcular(e);
+    avisos.push(...R.advertencias);
+    const idioma = el("idioma").value;
+    const piezas = F.renderizarTabla(R, {
+      idioma,
+      formato: el("presentacion").value,
+      unidad: e.porcion.unidad,
+    });
+    const nombre = {
+      en: "Nutrition Facts (inglés)",
+      fr: "Valeur nutritive (francés)",
+      bilingue: "Tabla bilingüe",
+    };
+    el("salida-tablas").innerHTML = piezas
+      .map((p) => bloque(`tabla-${p.id}`, nombre[p.id], p.html))
+      .join("");
+    if (idioma === "en" || idioma === "fr")
+      avisos.push(
+        "Una tabla en un solo idioma solo es válida si B.01.012(3) o (7) lo permiten (B.01.451(2)).",
+      );
+    if (!(e.ra > 0))
+      avisos.push(
+        "Sin cantidad de referencia (RA) el símbolo se evalúa solo con la porción declarada.",
+      );
+    pintarSimbolo(C.evaluarSimbolo(leerEntradaSimbolo(e)), e, idioma);
+  } catch (err) {
+    el("salida-tablas").innerHTML = "";
+    avisos.push(`No se pudo calcular: ${err.message}`);
+  }
+  pintarAvisos(avisos);
+  guardar();
 }
 
-function guardar(datos) {
+// --- Persistencia ---
+
+function guardar() {
+  const estado = {};
+  for (const x of el("form-nutrientes").querySelectorAll(
+    "input[id],select[id]",
+  ))
+    estado[x.id] = x.type === "checkbox" ? x.checked : x.value;
   try {
-    localStorage.setItem(CLAVE_STORAGE, JSON.stringify(datos));
-  } catch (e) {
-    // localStorage puede fallar (ventana privada, storage bloqueado); no es crítico.
+    localStorage.setItem(CLAVE_STORAGE, JSON.stringify(estado));
+  } catch (err) {
+    // localStorage puede fallar (ventana privada, almacenamiento bloqueado); no es crítico.
+  }
+}
+
+function aplicarEstado(estado) {
+  for (const [id, v] of Object.entries(estado)) {
+    const x = el(id);
+    if (!x) continue;
+    if (x.type === "checkbox") x.checked = !!v;
+    else x.value = v;
   }
 }
 
 function restaurar() {
-  let datos;
   try {
-    datos = JSON.parse(localStorage.getItem(CLAVE_STORAGE));
-  } catch (e) {
-    datos = null;
-  }
-  if (!datos) return;
-
-  document.getElementById("producto").value = datos.producto || "";
-  document.getElementById("porcion-texto").value = datos.porcionTexto || "";
-  document.getElementById("porcion-valor").value = datos.porcionValor || "";
-  document.getElementById("cantidad-referencia").value =
-    datos.cantidadReferencia || "";
-  for (const item of CAMPOS_100) {
-    const v = datos.valores100 && datos.valores100[item.k];
-    if (v != null) document.getElementById(`n-${item.k}`).value = v;
-  }
-  if (datos.opciones) {
-    document.getElementById("es-plato-principal").checked =
-      !!datos.opciones.platoPrincipal;
-    document.getElementById("es-ninos").checked = !!datos.opciones.ninos1a4;
-    document.getElementById("envase-chico").checked =
-      !!datos.opciones.envaseChico;
-    document.getElementById("fruta-sin-adicion").checked =
-      !!datos.opciones.frutaHortalizaSinAdicion;
-    document.getElementById("queso-yogur-calcio").checked =
-      !!datos.opciones.quesoOYogurConCalcioSuficiente;
-    document.getElementById("queso-exento-sodio").checked =
-      !!datos.opciones.quesoEsExentoDeSodio;
-    document.getElementById("exento-categoria").checked =
-      !!datos.opciones.exentoPorCategoria;
+    const estado = JSON.parse(localStorage.getItem(CLAVE_STORAGE));
+    if (estado) aplicarEstado(estado);
+  } catch (err) {
+    // Estado ilegible: se ignora y se parte del formulario vacío.
   }
 }
 
-function descargarPng(elementId, nombreArchivo) {
-  const el = document.getElementById(elementId);
-  html2canvas(el).then((canvas) => {
-    const enlace = document.createElement("a");
-    enlace.download = nombreArchivo;
-    enlace.href = canvas.toDataURL("image/png");
-    enlace.click();
-  });
+function vaciarFormulario() {
+  for (const x of el("form-nutrientes").querySelectorAll(
+    "input[id],select[id]",
+  )) {
+    if (x.type === "checkbox") x.checked = false;
+    else if (x.tagName === "SELECT") x.selectedIndex = 0;
+    else x.value = "";
+  }
+  recalcular();
 }
+
+const EJEMPLO = {
+  producto: "Yogur con fruta",
+  "porcion-valor": 175,
+  "hm-en": "3/4 cup",
+  "hm-fr": "3/4 tasse",
+  "cantidad-referencia": 175,
+  "por-envase": 1,
+  "n-cal": 95,
+  "n-fat": 2.5,
+  "n-sat": 1.6,
+  "n-trans": 0.1,
+  "n-chol": 10,
+  "n-na": 45,
+  "n-cho": 14,
+  "n-fibre": 0.3,
+  "n-sugars": 12,
+  "n-prot": 4,
+  "n-pot": 180,
+  "n-ca": 120,
+  "n-fe": 0.1,
+  "a-vitD": 0.1,
+  "ad-vitD": true,
+  "tipo-lacteo": "yogur",
+  "ing-leche": true,
+  "ing-fruta": true,
+  "superficie-principal": 120,
+  "superficie-disponible": 250,
+};
 
 document.addEventListener("DOMContentLoaded", () => {
-  construirCamposNutrientes();
+  construirFormulario();
   restaurar();
   recalcular();
-
-  document
-    .getElementById("form-nutrientes")
-    .addEventListener("input", recalcular);
-  document
-    .getElementById("form-nutrientes")
-    .addEventListener("change", recalcular);
-  document.getElementById("btn-descargar").addEventListener("click", () => {
-    descargarPng("tabla-nutricional", "nutrition-facts-canada.png");
+  const form = el("form-nutrientes");
+  form.addEventListener("input", recalcular);
+  form.addEventListener("change", recalcular);
+  el("btn-ejemplo").addEventListener("click", () => {
+    vaciarFormulario();
+    aplicarEstado(EJEMPLO);
+    recalcular();
   });
-  document
-    .getElementById("btn-descargar-simbolo")
-    .addEventListener("click", () => {
-      descargarPng("simbolo-frontal", "high-in-symbol-canada.png");
-    });
+  el("btn-limpiar").addEventListener("click", vaciarFormulario);
+  document.body.addEventListener("click", (ev) => {
+    const b = ev.target.closest(".btn-png");
+    if (!b) return;
+    const nodo = el(b.dataset.captura);
+    html2canvas(nodo, { backgroundColor: "#ffffff", scale: 2 }).then(
+      (canvas) => {
+        const a = document.createElement("a");
+        a.download = `${b.dataset.captura}.png`;
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+      },
+    );
+  });
 });
